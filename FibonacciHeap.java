@@ -1,4 +1,3 @@
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,7 +11,127 @@ import java.util.List;
 public class FibonacciHeap {
 
     public static void main(String[] args) {
+        testDeleteMinWithRootAndChildren();
     }
+    private static void testDeleteMinWithRootAndChildren() {
+        System.out.println("=== testDeleteMinWithRootAndChildren ===");
+        
+        FibonacciHeap h = new FibonacciHeap();
+    
+        // 1) Insert the min root (key=1)
+        FibonacciHeap.HeapNode minRoot = h.insert(1, "root-min");
+    
+        // 2) Insert another separate root (key=3)
+        FibonacciHeap.HeapNode otherRoot = h.insert(11, "root-other");
+    
+        // 3) Insert more nodes (keys=5,7,10), each starts as a root
+        FibonacciHeap.HeapNode childA = h.insert(5, "childA");
+        FibonacciHeap.HeapNode childB = h.insert(7, "childB");
+        FibonacciHeap.HeapNode childC = h.insert(10, "childC");
+    
+        // 4) Force them to be children of the root with key=1
+        //    (We do this artificially; in a normal Fibonacci heap,
+        //     'link(...)' is typically used in consolidate for equal-rank roots.
+        //     But this is just a test setup.)
+        h.link(childA, minRoot);
+        h.link(childB, minRoot);
+        h.link(childC, minRoot);
+        h.printHeap();
+    
+        // Now the heap has 2 root-level nodes:
+        //   - key=1 with children = {5,7,10}
+        //   - key=3 (no children)
+        // min should be 1, size=5, numTrees=2
+    
+        // Print the heap structure if you have a printHeap() or do manual checks
+        System.out.println("Before deleteMin:");
+        // If you have a printHeap() method, uncomment:
+        // h.printHeap(); 
+        System.out.println("  size=" + h.size() +
+                           ", min=" + h.findMin().key +
+                           ", numTrees=" + h.numTrees());
+    
+        // 5) Now delete the min (which is the node with key=1)
+        h.deleteMin();
+    
+        System.out.println("After deleteMin (removing key=1):");
+        // If you have a printHeap() method, uncomment:
+        // h.printHeap();
+        System.out.println("  size=" + h.size() +
+                           ", min=" + (h.findMin() == null ? "null" : h.findMin().key) +
+                           ", numTrees=" + h.numTrees());
+    
+        System.out.println("=== END testDeleteMinWithRootAndChildren ===\n");
+    }
+    
+
+    
+public void printHeap() {
+    if (this.min == null) {
+        System.out.println("Heap is empty.");
+        return;
+    }
+
+    System.out.println("---------------------------------------");
+    System.out.println("FibonacciHeap (size=" + this.size + 
+                       ", numTrees=" + this.numTrees +
+                       ", min.key=" + this.min.key + "):");
+
+    // Traverse the top-level ring starting from 'min'
+    HeapNode current = this.min;
+    boolean done = false;
+    int treeCount = 0;
+
+    while (!done) {
+        treeCount++;
+        System.out.println("Tree #" + treeCount + ":");
+        // Recursively print this root and its children
+        printSubtree(current, "  ");
+
+        current = current.next;
+        if (current == this.min) {
+            done = true;
+        }
+    }
+    System.out.println("---------------------------------------");
+}
+
+    
+    
+    /**
+ * Recursively prints a node's details, then prints its children (if any).
+ * 'indent' is just a string (e.g. "  " or "    ") used for indentation.
+ */
+private void printSubtree(HeapNode node, String indent) {
+    // Print this node's basic info
+    System.out.println(indent + "- key=" + node.key +
+                       ", rank=" + node.rank +
+                       ", mark=" + node.mark);
+
+    // If it has children, recursively print each child in its circular list
+    if (node.child != null) {
+        HeapNode child = node.child;
+        boolean done = false;
+        while (!done) {
+            printSubtree(child, indent + "  ");
+            child = child.next;
+            if (child == node.child) {
+                done = true;
+            }
+        }
+    }
+}
+
+   
+    
+    
+    
+       
+        
+       
+    
+    
+    
 
     public HeapNode min;
     public int size; //new
@@ -42,17 +161,17 @@ public class FibonacciHeap {
      * Insert (key,info) into the heap and return the newly generated HeapNode.
      *
      */
-    public HeapNode insert(int key, String info) // Shalev
+    public HeapNode insert(int key, String info) // Shalev-Works.
     {  //first, let's insert the relevant information for the new node.
-
         //public int key;
         //public String info;
-        //public HeapNode child;
+       // public HeapNode child;
         //public HeapNode next;
         //public HeapNode prev;
         //public HeapNode parent;
         //public int rank;
         //public boolean mark;
+
         HeapNode x = new HeapNode();
         x.key = key;
         x.info = info;
@@ -98,53 +217,88 @@ public class FibonacciHeap {
      * Delete the minimal item
      *
      */
-    public void consolidate(HeapNode node) { // Need to implement for DeleteMin() 
-        // Here, we created a list of all the roots
+    private void consolidate(HeapNode node) {
+        // 1) Gather current roots into a list and remove them from the ring
         List<HeapNode> rootList = new ArrayList<>();
-        HeapNode current = node;
-        boolean done = false;
-        while (!done) {
-            rootList.add(current);
-            current = current.next;
-            if (current == node) {
-                done = true;
-            }
-        }
-
-        // Here, we created an array of the comaptible size- the possible number of ranks...
-        int arraySize = (int) (Math.floor(Math.log(this.size) / Math.log(2))) + 2;
-        HeapNode[] A = new HeapNode[arraySize];
-        Arrays.fill(A, null);
-
-        for (HeapNode R : rootList) {
-            HeapNode x = R;
-            int r = x.rank;
-
-            if (A[r] == null) {
-                A[r] = x;
-            } else {
-                done = true;
-                while (!done) {
-                    this.link(A[r], x);
-                    if (x.key < A[r].key) {
-                        x.rank++;
-                    } else {
-                        A[r].rank++;
-                    }
-                    HeapNode merged = A[r];
-
-                    // TODO: continue from here, update numTrees, min, etc.
+        {
+            HeapNode current = node;
+            boolean done = false;
+            while (!done) {
+                rootList.add(current);
+                current = current.next;
+                if (current == node) {
+                    done = true;
                 }
             }
         }
-
+    
+        // 2) Create array A for merging roots of equal rank
+        int arraySize = (int) (Math.floor(Math.log(this.size) / Math.log(2))) + 2;
+        HeapNode[] A = new HeapNode[arraySize];
+        Arrays.fill(A, null);
+    
+        // 3) Merge roots with the same rank
+        for (HeapNode w : rootList) {
+            // Remove w from circular list so we can re-link it from scratch
+            w.prev.next = w.next;
+            w.next.prev = w.prev;
+            w.parent = null;
+            w.next = w;
+            w.prev = w;
+    
+            int d = w.rank;
+            HeapNode x = w;
+            while (A[d] != null) {
+                HeapNode y = A[d];
+                // Make sure x is the smaller-key node
+                if (y.key < x.key) {
+                    HeapNode temp = x;
+                    x = y;
+                    y = temp;
+                }
+                // Link bigger key y under x
+                link(y, x);
+                A[d] = null;
+                d++;
+            }
+            A[d] = x;
+        }
+    
+        // 4) Rebuild the root list and find new min
+        this.min = null;
+        this.numTrees = 0; // we'll re-count them now
+    
+        for (int i = 0; i < A.length; i++) {
+            if (A[i] != null) {
+                // If we have no current min, A[i] becomes min
+                if (this.min == null) {
+                    this.min = A[i];
+                    A[i].prev = A[i];
+                    A[i].next = A[i];
+                } else {
+                    // Insert A[i] into the min's circular root list
+                    A[i].prev = this.min;
+                    A[i].next = this.min.next;
+                    this.min.next.prev = A[i];
+                    this.min.next = A[i];
+    
+                    // Update min pointer if necessary
+                    if (A[i].key < this.min.key) {
+                        this.min = A[i];
+                    }
+                }
+                this.numTrees++;
+            }
+        }
     }
+    
 
     /**
      * Moves all children of node z into the heap's root list, making them new
      * roots. Assumes z.child is non-null.
      */
-    private void addChildrenToRootList(HeapNode z) {
+    private void addChildrenToRootList(HeapNode z) { //Shalev- works
+        // z is one of the roots
         // If z has no children, nothing to do
         if (z.child == null) {
             return;
@@ -183,11 +337,14 @@ public class FibonacciHeap {
     }
 
     private void link(HeapNode y, HeapNode x) {
+        this.totalLinks++;
+        this.numTrees--;
         if (y.key < x.key) {
-            link_help(y, x);
-        } else {
             link_help(x, y);
+        } else {
+            link_help(y, x);
         }
+
     }
 
     private void link_help(HeapNode y, HeapNode x) {// Making y the child of X, here we assume x and y has the same rank. 
@@ -218,39 +375,57 @@ public class FibonacciHeap {
         y.mark = false;
     }
 
-    public void deleteMin() //Shalev
-	// TODO: update numTrees if needed
-    {
-        HeapNode fakeMin;
-        // if the tree is empty
-        if (this.min == null) {
-            return;
-
-        }
-        HeapNode minChild = this.min.child;
-        if (minChild == null) {
-            if (this.size == 1) {
-                this.min = null;
-                this.size--;
-            } else {
-                this.min.prev.next = this.min.next;
-                this.min.next.prev = this.min.prev;
-                this.size--;
-                fakeMin = this.min.next;
-                this.min = fakeMin;
-                this.consolidate(this.min); // here we will update for real the min field
-            }
-        } else {
-			this.addChildrenToRootList(this.min);
-			this.min.prev.next = this.min.next;
-			this.min.next.prev = this.min.prev;
-			fakeMin = this.min.next;
-			this.min = fakeMin;
-			this.size--;
-			this.consolidate(this.min); // here we will update for real the min field
-		}
-
+    public void deleteMin() 
+{
+    // 1) If heap is empty, nothing to delete
+    if (this.min == null) {
+        return;
     }
+
+    // We'll call the current min 'z'
+    HeapNode z = this.min;
+
+    // 2) If z has children, promote them all to the root list
+    
+    if (z.child != null) {
+        // 'addChildrenToRootList' does the pointer surgery:
+        //   * Each child => parent's pointer becomes null
+        //   * Moves each child into the top-level ring
+        this.addChildrenToRootList(z);
+        // Clear z's child pointer now that they're top-level roots
+        if(this.min.key == 3){
+        //System.out.println(this.min.child.key);
+       
+        
+        }
+
+        z.child = null;
+    }
+
+    // 3) Remove z from the root list
+    z.prev.next = z.next;
+    z.next.prev = z.prev;
+
+    // 4) If z was the ONLY node in the root ring, set min to null
+    //    else pick z.next as a new 'min' placeholder
+    if (z == z.next) {
+        this.min = null;
+        // If you maintain 'numTrees' in real time, you can set it to 0:
+        this.numTrees = 0;
+    } else {
+        this.min = z.next;
+    }
+
+    // 5) Decrease the heap size by 1
+    this.size--;
+
+    // 6) If the heap is not empty, run 'consolidate' to merge roots and update min
+    if (this.min != null) {
+        this.consolidate(this.min);
+    }
+    // else, the heap is empty => min is null, numTrees=0
+}
+
 
     /**
      *
@@ -352,7 +527,8 @@ public class FibonacciHeap {
             this.totalLinks = heap2.totalLinks;
             return;
         }
-        return; // should be replaced by student code   		
+
+        return;   		
     }
 
     /**
@@ -389,5 +565,7 @@ public class FibonacciHeap {
         public int rank;
         public boolean mark;
     }
+
+
 
 }
