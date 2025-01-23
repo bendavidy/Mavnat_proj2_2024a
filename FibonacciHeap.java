@@ -15,110 +15,6 @@ public class FibonacciHeap {
         testDeleteMinWithRootAndChildren();
     }
 
-    private static void testDeleteMinWithRootAndChildren() {
-        System.out.println("=== testDeleteMinWithRootAndChildren ===");
-
-        FibonacciHeap h = new FibonacciHeap();
-
-        // 1) Insert the min root (key=1)
-        FibonacciHeap.HeapNode minRoot = h.insert(1, "root-min");
-
-        // 2) Insert another separate root (key=3)
-        FibonacciHeap.HeapNode otherRoot = h.insert(11, "root-other");
-
-        // 3) Insert more nodes (keys=5,7,10), each starts as a root
-        FibonacciHeap.HeapNode childA = h.insert(5, "childA");
-        FibonacciHeap.HeapNode childB = h.insert(7, "childB");
-        FibonacciHeap.HeapNode childC = h.insert(10, "childC");
-
-        // 4) Force them to be children of the root with key=1
-        //    (We do this artificially; in a normal Fibonacci heap,
-        //     'link(...)' is typically used in consolidate for equal-rank roots.
-        //     But this is just a test setup.)
-        h.link(childA, minRoot);
-        h.link(childB, minRoot);
-        h.link(childC, minRoot);
-        h.printHeap();
-
-        // Now the heap has 2 root-level nodes:
-        //   - key=1 with children = {5,7,10}
-        //   - key=3 (no children)
-        // min should be 1, size=5, numTrees=2
-        // Print the heap structure if you have a printHeap() or do manual checks
-        System.out.println("Before deleteMin:");
-        // If you have a printHeap() method, uncomment:
-        // h.printHeap(); 
-        System.out.println("  size=" + h.size()
-                + ", min=" + h.findMin().key
-                + ", numTrees=" + h.numTrees());
-
-        // 5) Now delete the min (which is the node with key=1)
-        h.deleteMin();
-
-        System.out.println("After deleteMin (removing key=1):");
-        // If you have a printHeap() method, uncomment:
-        // h.printHeap();
-        System.out.println("  size=" + h.size()
-                + ", min=" + (h.findMin() == null ? "null" : h.findMin().key)
-                + ", numTrees=" + h.numTrees());
-
-        System.out.println("=== END testDeleteMinWithRootAndChildren ===\n");
-    }
-
-    public void printHeap() {
-        if (this.min == null) {
-            System.out.println("Heap is empty.");
-            return;
-        }
-
-        System.out.println("---------------------------------------");
-        System.out.println("FibonacciHeap (size=" + this.size
-                + ", numTrees=" + this.numTrees
-                + ", min.key=" + this.min.key + "):");
-
-        // Traverse the top-level ring starting from 'min'
-        HeapNode current = this.min;
-        boolean done = false;
-        int treeCount = 0;
-
-        while (!done) {
-            treeCount++;
-            System.out.println("Tree #" + treeCount + ":");
-            // Recursively print this root and its children
-            printSubtree(current, "  ");
-
-            current = current.next;
-            if (current == this.min) {
-                done = true;
-            }
-        }
-        System.out.println("---------------------------------------");
-    }
-
-    /**
-     * Recursively prints a node's details, then prints its children (if any).
-     * 'indent' is just a string (e.g. " " or " ") used for indentation.
-     */
-    private void printSubtree(HeapNode node, String indent) {
-        // Print this node's basic info
-        System.out.println(indent + "- key=" + node.key
-                + ", rank=" + node.rank
-                + ", mark=" + node.mark);
-
-        // If it has children, recursively print each child in its circular list
-        if (node.child != null) {
-            HeapNode child = node.child;
-            boolean done = false;
-            while (!done) {
-                printSubtree(child, indent + "  ");
-                child = child.next;
-                if (child == node.child) {
-                    done = true;
-                }
-            }
-        }
-    }
-
     public HeapNode min;
     public int size; //new
     public int totalLinks;//new
@@ -253,24 +149,22 @@ public class FibonacciHeap {
         // 4) Rebuild the root list and find new min
         this.min = null;
         this.numTrees = 0; // we'll re-count them now
-
-        for (int i = 0; i < A.length; i++) {
-            if (A[i] != null) {
+        for (HeapNode A1 : A) {
+            if (A1 != null) {
                 // If we have no current min, A[i] becomes min
                 if (this.min == null) {
-                    this.min = A[i];
-                    A[i].prev = A[i];
-                    A[i].next = A[i];
+                    this.min = A1;
+                    A1.prev = A1;
+                    A1.next = A1;
                 } else {
                     // Insert A[i] into the min's circular root list
-                    A[i].prev = this.min;
-                    A[i].next = this.min.next;
-                    this.min.next.prev = A[i];
-                    this.min.next = A[i];
-
+                    A1.prev = this.min;
+                    A1.next = this.min.next;
+                    this.min.next.prev = A1;
+                    this.min.next = A1;
                     // Update min pointer if necessary
-                    if (A[i].key < this.min.key) {
-                        this.min = A[i];
+                    if (A1.key < this.min.key) {
+                        this.min = A1;
                     }
                 }
                 this.numTrees++;
@@ -582,6 +476,182 @@ public class FibonacciHeap {
         public HeapNode parent;
         public int rank;
         public boolean mark;
+
+        public HeapNode() {
+        }
+
+        public HeapNode(int key, String info) {
+            this.key = key;
+            this.info = info;
+            this.child = null;
+            this.next = this;
+            this.prev = this;
+            this.parent = null;
+            this.rank = 0;
+            this.mark = false;
+        }
+
+        public int getKey() {
+            return this.key;
+        }
     }
 
+    // ***************** METHODS FOR TESTING ****************
+    // TODO: Delete this when done
+    private static void testDeleteMinWithRootAndChildren() {
+        System.out.println("=== testDeleteMinWithRootAndChildren ===");
+
+        FibonacciHeap h = new FibonacciHeap();
+
+        // 1) Insert the min root (key=1)
+        FibonacciHeap.HeapNode minRoot = h.insert(1, "root-min");
+
+        // 2) Insert another separate root (key=3)
+        FibonacciHeap.HeapNode otherRoot = h.insert(11, "root-other");
+
+        // 3) Insert more nodes (keys=5,7,10), each starts as a root
+        FibonacciHeap.HeapNode childA = h.insert(5, "childA");
+        FibonacciHeap.HeapNode childB = h.insert(7, "childB");
+        FibonacciHeap.HeapNode childC = h.insert(10, "childC");
+
+        // 4) Force them to be children of the root with key=1
+        //    (We do this artificially; in a normal Fibonacci heap,
+        //     'link(...)' is typically used in consolidate for equal-rank roots.
+        //     But this is just a test setup.)
+        h.link(childA, minRoot);
+        h.link(childB, minRoot);
+        h.link(childC, minRoot);
+        h.printHeap();
+
+        // Now the heap has 2 root-level nodes:
+        //   - key=1 with children = {5,7,10}
+        //   - key=3 (no children)
+        // min should be 1, size=5, numTrees=2
+        // Print the heap structure if you have a printHeap() or do manual checks
+        System.out.println("Before deleteMin:");
+        // If you have a printHeap() method, uncomment:
+        // h.printHeap(); 
+        System.out.println("  size=" + h.size()
+                + ", min=" + h.findMin().key
+                + ", numTrees=" + h.numTrees());
+
+        // 5) Now delete the min (which is the node with key=1)
+        h.deleteMin();
+
+        System.out.println("After deleteMin (removing key=1):");
+        // If you have a printHeap() method, uncomment:
+        // h.printHeap();
+        System.out.println("  size=" + h.size()
+                + ", min=" + (h.findMin() == null ? "null" : h.findMin().key)
+                + ", numTrees=" + h.numTrees());
+
+        System.out.println("=== END testDeleteMinWithRootAndChildren ===\n");
+    }
+
+    public void printHeap() {
+        if (this.min == null) {
+            System.out.println("Heap is empty.");
+            return;
+        }
+
+        System.out.println("---------------------------------------");
+        System.out.println("FibonacciHeap (size=" + this.size
+                + ", numTrees=" + this.numTrees
+                + ", min.key=" + this.min.key + "):");
+
+        // Traverse the top-level ring starting from 'min'
+        HeapNode current = this.min;
+        boolean done = false;
+        int treeCount = 0;
+
+        while (!done) {
+            treeCount++;
+            System.out.println("Tree #" + treeCount + ":");
+            // Recursively print this root and its children
+            printSubtree(current, "  ");
+
+            current = current.next;
+            if (current == this.min) {
+                done = true;
+            }
+        }
+        System.out.println("---------------------------------------");
+    }
+
+    /**
+     * Recursively prints a node's details, then prints its children (if any).
+     * 'indent' is just a string (e.g. " " or " ") used for indentation.
+     */
+    private void printSubtree(HeapNode node, String indent) {
+        // Print this node's basic info
+        System.out.println(indent + "- key=" + node.key
+                + ", rank=" + node.rank
+                + ", mark=" + node.mark);
+
+        // If it has children, recursively print each child in its circular list
+        if (node.child != null) {
+            HeapNode child = node.child;
+            boolean done = false;
+            while (!done) {
+                printSubtree(child, indent + "  ");
+                child = child.next;
+                if (child == node.child) {
+                    done = true;
+                }
+            }
+        }
+    }
+
+    public int potential() {
+        int t = 0; // Number of trees (roots)
+        int m = 0; // Number of marked nodes
+        HeapNode current = min;
+
+        if (current != null) {
+            // Traverse the circular linked list of roots
+            do {
+                t++; // Each root is a tree
+                m += countMarkedNodes(current); // Count marked nodes in the tree
+                current = current.next;
+            } while (current != min);
+        }
+
+        return t + 2 * m; // Potential is t + 2 * m
+    }
+
+    // Helper method to count marked nodes in a tree
+    private int countMarkedNodes(HeapNode node) {
+        int count = 0;
+        while (node != null) {
+            if (node.mark) {
+                count++; // Increment if the node is marked
+
+            }
+            node = node.child;
+        }
+        return count;
+    }
+
+    public int[] countersRep() {
+        int[] counters = new int[calculateMaxRank()]; // Array to store the number of trees of each rank
+        HeapNode current = min;
+
+        // Traverse the root list and count trees by rank
+        if (current != null) {
+            do {
+                int rank = current.rank;
+                counters[rank]++; // Increment the count of trees of this rank
+                current = current.next;
+            } while (current != min);
+        }
+
+        return counters;
+    }
+
+    // Helper method to calculate the maximum possible rank (based on the number of nodes in the heap)
+    private int calculateMaxRank() {
+        return (int) Math.ceil(Math.log(size) / Math.log(2)) + 1;
+    }
+
+    // ***************** END OF TESTING METHODS ****************
 }
