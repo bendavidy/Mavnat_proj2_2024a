@@ -12,7 +12,7 @@ import java.util.List;
 public class FibonacciHeap {
 
     public static void main(String[] args) {
-        testDeleteMinWithRootAndChildren();
+        testDeleteMinSingle();
     }
 
     public HeapNode min;
@@ -89,7 +89,8 @@ public class FibonacciHeap {
      * Return the minimal HeapNode, null if empty.
      *
      */
-    public HeapNode findMin() //Shalev
+    public HeapNode findMin() 
+    //Shalev
     {
         return this.min; // should be replaced by student code
     }
@@ -176,7 +177,8 @@ public class FibonacciHeap {
      * Moves all children of node z into the heap's root list, making them new
      * roots. Assumes z.child is non-null.
      */
-    private void addChildrenToRootList(HeapNode z) { //Shalev- works
+    private void addChildrenToRootList(HeapNode z) { //Shalev- works Important -In the while loop we relay on the rank for the number of iteration so we need to maintain this filed correctly.
+
         // z is one of the roots
         // If z has no children, nothing to do
         if (z.child == null) {
@@ -184,10 +186,12 @@ public class FibonacciHeap {
         }
 
         // We'll iterate over the entire child ring exactly once
+        int counter = 0;
         HeapNode startChild = z.child;
         HeapNode current = startChild;
         boolean done = false;
         while (!done) {
+            System.out.println("Iteration!!!!!");
             // Store next sibling before we alter pointers
             HeapNode nextC = current.next;
 
@@ -206,7 +210,8 @@ public class FibonacciHeap {
             // Move on to the next sibling 
             current = nextC;
             // Stop if we've looped back to the start
-            if (current == startChild) {
+            counter++;
+            if (counter == z.rank) {
                 done = true;
             }
         }
@@ -255,6 +260,7 @@ public class FibonacciHeap {
     }
 
     public void deleteMin() {
+        // I checked it in many situations and it worked- but i need to check it with more tests
         // 1) If heap is empty, nothing to delete
         if (this.min == null) {
             return;
@@ -496,57 +502,11 @@ public class FibonacciHeap {
         }
     }
 
+
     // ***************** METHODS FOR TESTING ****************
     // TODO: Delete this when done
-    private static void testDeleteMinWithRootAndChildren() {
-        System.out.println("=== testDeleteMinWithRootAndChildren ===");
 
-        FibonacciHeap h = new FibonacciHeap();
-
-        // 1) Insert the min root (key=1)
-        FibonacciHeap.HeapNode minRoot = h.insert(1, "root-min");
-
-        // 2) Insert another separate root (key=3)
-        FibonacciHeap.HeapNode otherRoot = h.insert(11, "root-other");
-
-        // 3) Insert more nodes (keys=5,7,10), each starts as a root
-        FibonacciHeap.HeapNode childA = h.insert(5, "childA");
-        FibonacciHeap.HeapNode childB = h.insert(7, "childB");
-        FibonacciHeap.HeapNode childC = h.insert(10, "childC");
-
-        // 4) Force them to be children of the root with key=1
-        //    (We do this artificially; in a normal Fibonacci heap,
-        //     'link(...)' is typically used in consolidate for equal-rank roots.
-        //     But this is just a test setup.)
-        h.link(childA, minRoot);
-        h.link(childB, minRoot);
-        h.link(childC, minRoot);
-        h.printHeap();
-
-        // Now the heap has 2 root-level nodes:
-        //   - key=1 with children = {5,7,10}
-        //   - key=3 (no children)
-        // min should be 1, size=5, numTrees=2
-        // Print the heap structure if you have a printHeap() or do manual checks
-        System.out.println("Before deleteMin:");
-        // If you have a printHeap() method, uncomment:
-        // h.printHeap(); 
-        System.out.println("  size=" + h.size()
-                + ", min=" + h.findMin().key
-                + ", numTrees=" + h.numTrees());
-
-        // 5) Now delete the min (which is the node with key=1)
-        h.deleteMin();
-
-        System.out.println("After deleteMin (removing key=1):");
-        // If you have a printHeap() method, uncomment:
-        // h.printHeap();
-        System.out.println("  size=" + h.size()
-                + ", min=" + (h.findMin() == null ? "null" : h.findMin().key)
-                + ", numTrees=" + h.numTrees());
-
-        System.out.println("=== END testDeleteMinWithRootAndChildren ===\n");
-    }
+   
 
     public void printHeap() {
         if (this.min == null) {
@@ -577,6 +537,8 @@ public class FibonacciHeap {
         }
         System.out.println("---------------------------------------");
     }
+
+
 
     /**
      * Recursively prints a node's details, then prints its children (if any).
