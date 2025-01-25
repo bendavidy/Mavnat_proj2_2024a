@@ -1,3 +1,4 @@
+// TODO: delete all system.out.println
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +13,7 @@ import java.util.List;
 public class FibonacciHeap {
 
     public static void main(String[] args) {
-        testDeleteMinSingle();
+        // testDeleteMinSingle();
     }
 
     public HeapNode min;
@@ -89,8 +90,7 @@ public class FibonacciHeap {
      * Return the minimal HeapNode, null if empty.
      *
      */
-    public HeapNode findMin() 
-    //Shalev
+    public HeapNode findMin() //Shalev
     {
         return this.min; // should be replaced by student code
     }
@@ -191,7 +191,7 @@ public class FibonacciHeap {
         HeapNode current = startChild;
         boolean done = false;
         while (!done) {
-            System.out.println("Iteration!!!!!");
+            // System.out.println("Iteration!!!!!");
             // Store next sibling before we alter pointers
             HeapNode nextC = current.next;
 
@@ -316,14 +316,20 @@ public class FibonacciHeap {
      *
      */
     public void decreaseKey(HeapNode x, int diff) { //Yoad    
+        if (x == null || diff < 0 || diff > x.key) {
+            return;
+        }
+        // System.out.println("decreaseKey: " + x.key + " by " + diff);
         x.key = x.key - diff;
-        if (x.parent != null && x.key < x.parent.key) {
+        HeapNode y = x.parent;
+        if (y != null && x.key < y.key) {
             cut(x);
-            cascadingCut(x.parent);
+            cascadingCut(y);
         }
         if (x.key < this.min.key) {
             this.min = x;
         }
+        // System.out.println("x.Key: " + x.key);
     }
 
     private void cut(HeapNode x) { //Yoad
@@ -349,9 +355,10 @@ public class FibonacciHeap {
         x.next.prev = x;
     }
 
-    private void cascadingCut(HeapNode y) { //Yoad
+    private void cascadingCut(HeapNode y) { //Yoad - after cutting y's child we check if y is marked, if it is we cut it as well.
+        // System.out.println("cascadingCut: " + y.key);
         HeapNode z = y.parent;
-        if (z != null) {
+        if (z != null) { // if y is not a root
             if (!y.mark) {
                 y.mark = true;
             } else {
@@ -367,23 +374,28 @@ public class FibonacciHeap {
      *
      */
     public void delete(HeapNode x) { //Yoad
+        if (x == null) {
+            return;
+        }
         if (x.key == this.min.key) {
             deleteMin();
             return;
         }
         // detach children from x and add them to the root list
         HeapNode child = x.child;
-        child.prev.next = this.min.next;
-        this.min.next.prev = child.prev;
-        child.prev = this.min;
-        this.min.next = child;
-        this.numTrees += x.rank;
-        this.totalCuts += x.rank;
-        // update their parent and mark
-        while (child.parent != null) {
-            child.parent = null;
-            child.mark = false;
-            child = child.next;
+        if (child != null) {
+            child.prev.next = this.min.next;
+            this.min.next.prev = child.prev;
+            child.prev = this.min;
+            this.min.next = child;
+            this.numTrees += x.rank;
+            this.totalCuts += x.rank;
+            // update their parent and mark
+            while (child.parent != null) {
+                child.parent = null;
+                child.mark = false;
+                child = child.next;
+            }
         }
         // delete x
         this.size--;
@@ -396,12 +408,11 @@ public class FibonacciHeap {
             } else {
                 x.parent.child = x.next;
             }
+            totalCuts++;
+            cascadingCut(x.parent);
+        } else {
+            numTrees--;
         }
-
-        /* TODO: continue and chehck these: 
-		 * x.paretn - decrease rank, if needed cut and cascadingCut
-		 * 
-         */
     }
 
     /**
@@ -429,9 +440,8 @@ public class FibonacciHeap {
      * Meld the heap with heap2
      *
      */
-    public void meld(FibonacciHeap heap2) //Shalev- Stopped at the middle, need to continue
-    {
-        if (heap2.size() == 0) { // if the fibo heap we are melding with is empty, than there is nothing to do.
+    public void meld(FibonacciHeap heap2) { //Yoad
+        if (heap2 == null || heap2.size() == 0) { // if the fibo heap we are melding with is empty, than there is nothing to do.
             return;
         }
         if (this.size() == 0) { // if our fibo heap is empty than lets turn our fibo heap to heap2.
@@ -439,10 +449,21 @@ public class FibonacciHeap {
             this.size = heap2.size;
             this.totalCuts = heap2.totalCuts;
             this.totalLinks = heap2.totalLinks;
+            this.numTrees = heap2.numTrees;
             return;
         }
-
-        return;
+        // if both heaps are not empty, than we need to connect the two heaps.
+        this.min.prev.next = heap2.min.next;
+        heap2.min.next.prev = this.min.prev;
+        this.min.prev = heap2.min.prev;
+        heap2.min.prev.next = this.min;
+        if (heap2.min.key < this.min.key) {
+            this.min = heap2.min;
+        }
+        this.size += heap2.size;
+        this.totalCuts += heap2.totalCuts;
+        this.totalLinks += heap2.totalLinks;
+        this.numTrees += heap2.numTrees;
     }
 
     /**
@@ -502,12 +523,8 @@ public class FibonacciHeap {
         }
     }
 
-
     // ***************** METHODS FOR TESTING ****************
     // TODO: Delete this when done
-
-   
-
     public void printHeap() {
         if (this.min == null) {
             System.out.println("Heap is empty.");
@@ -537,8 +554,6 @@ public class FibonacciHeap {
         }
         System.out.println("---------------------------------------");
     }
-
-
 
     /**
      * Recursively prints a node's details, then prints its children (if any).
