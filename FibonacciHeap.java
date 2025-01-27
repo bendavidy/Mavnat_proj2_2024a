@@ -1,4 +1,3 @@
-// TODO: delete all system.out.println
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -191,7 +190,6 @@ public class FibonacciHeap {
         HeapNode current = startChild;
         boolean done = false;
         while (!done) {
-            // System.out.println("Iteration!!!!!");
             // Store next sibling before we alter pointers
             HeapNode nextC = current.next;
 
@@ -276,11 +274,6 @@ public class FibonacciHeap {
             //   * Moves each child into the top-level ring
             this.addChildrenToRootList(z);
             // Clear z's child pointer now that they're top-level roots
-            if (this.min.key == 3) {
-                //System.out.println(this.min.child.key);
-
-            }
-
             z.child = null;
         }
 
@@ -319,7 +312,6 @@ public class FibonacciHeap {
         if (x == null || diff < 0 || diff > x.key) {
             return;
         }
-        // System.out.println("decreaseKey: " + x.key + " by " + diff);
         x.key = x.key - diff;
         HeapNode y = x.parent;
         if (y != null && x.key < y.key) {
@@ -329,10 +321,9 @@ public class FibonacciHeap {
         if (x.key < this.min.key) {
             this.min = x;
         }
-        // System.out.println("x.Key: " + x.key);
     }
 
-    private void cut(HeapNode x) { //Yoad
+    private void cut(HeapNode x) { //Yoad. assumes x is not a root.
         this.totalCuts++;
         this.numTrees++;
         // Remove x from the child list of its parent
@@ -356,17 +347,18 @@ public class FibonacciHeap {
     }
 
     private void cascadingCut(HeapNode y) { //Yoad - after cutting y's child we check if y is marked, if it is we cut it as well.
-        // System.out.println("cascadingCut: " + y.key);
         HeapNode z = y.parent;
-        if (z != null) { // if y is not a root
-            if (!y.mark) {
-                y.mark = true;
-            } else {
-                cut(y);
-                cascadingCut(z);
-            }
+        if (z == null) { // if y is a root
+            return;
+        }
+        if (!y.mark) {
+            y.mark = true;
+        } else {
+            cut(y);
+            cascadingCut(z);
         }
     }
+
 
     /**
      *
@@ -524,7 +516,7 @@ public class FibonacciHeap {
     }
 
     // ***************** METHODS FOR TESTING ****************
-    // TODO: Delete this when done
+    // TODO: Delete tests when done
     public void printHeap() {
         if (this.min == null) {
             System.out.println("Heap is empty.");
