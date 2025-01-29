@@ -1,7 +1,10 @@
 
+// TODO: delete improts
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
 
 /**
  * FibonacciHeap
@@ -12,7 +15,125 @@ import java.util.List;
 public class FibonacciHeap {
 
     public static void main(String[] args) {
-        // testDeleteMinSingle();
+        FibonacciHeap heap1;
+        FibonacciHeap heap2;
+        FibonacciHeap heap3;
+
+        ArrayList<Integer> order;
+
+        int[][] details = new int[5][3]; // Rows are {time, size, links, cuts, trees}, and the columns are the different tests.
+
+        StringBuilder test1 = new StringBuilder();
+        test1.append("TEST 1:\n").append(String.format("%-10s %-15s %-15s %-15s %-15s %-15s%n",
+                "i", "Runtime", "Heap Size", "Links", "Cuts", "Trees"));
+        StringBuilder test2 = new StringBuilder();
+        test2.append("TEST 2:\n").append(String.format("%-10s %-15s %-15s %-15s %-15s %-15s%n",
+                "i", "Runtime", "Heap Size", "Links", "Cuts", "Trees"));
+        StringBuilder test3 = new StringBuilder();
+        test3.append("TEST 3:\n").append(String.format("%-10s %-15s %-15s %-15s %-15s %-15s%n",
+                "i", "Runtime", "Heap Size", "Links", "Cuts", "Trees"));
+
+        for (int i = 1; i <= 5; i++) { // 5 different sizes
+            int n = (int) Math.pow(3, i + 7) - 1;
+
+            for (int row[] : details) { // Initializing matrix
+                for (int k = 0; k < 3; k++) {
+                    row[k] = 0;
+                }
+            }
+
+            for (int j = 1; j <= 20; j++) { // avaraging out over 20 identical experiments
+                heap1 = new FibonacciHeap();
+                heap2 = new FibonacciHeap();
+                heap3 = new FibonacciHeap();
+
+                order = new ArrayList<>();
+                for (int k = 1; k <= n; k++) {
+                    order.add(k);
+                }
+
+                Collections.shuffle(order);
+
+                // TEST 1
+                long startTime = System.currentTimeMillis();
+                for (int item : order) {
+                    heap1.insert(item, "key " + item);
+                }
+                heap1.deleteMin();
+                long totalTime = System.currentTimeMillis() - startTime;
+                details[0][0] += totalTime;
+                details[1][0] += heap1.size();
+                details[2][0] += heap1.totalLinks();
+                details[3][0] += heap1.totalCuts();
+                details[4][0] += heap1.numTrees();
+
+                // TEST 2
+                startTime = System.currentTimeMillis();
+                for (int item : order) {
+                    heap2.insert(item, "key " + item);
+                }
+                for (int k = 0; k <= n / 2; k++) {
+                    heap2.deleteMin();
+                }
+                totalTime = System.currentTimeMillis() - startTime;
+                details[0][1] += totalTime;
+                details[1][1] += heap2.size();
+                details[2][1] += heap2.totalLinks();
+                details[3][1] += heap2.totalCuts();
+                details[4][1] += heap2.numTrees();
+
+                // TEST 3
+                startTime = System.currentTimeMillis();
+                HeapNode[] pointers = new HeapNode[n];
+                for (int item : order) {
+                    pointers[item - 1] = heap3.insert(item, "key " + item);
+                }
+                heap3.deleteMin();
+                for (int k = n - 1; k > 31; k--) {
+                    heap3.delete(pointers[k]);
+                }
+                totalTime = System.currentTimeMillis() - startTime;
+                details[0][2] += totalTime;
+                details[1][2] += heap3.size();
+                details[2][2] += heap3.totalLinks();
+                details[3][2] += heap3.totalCuts();
+                details[4][2] += heap3.numTrees();
+            }
+
+            test1.append(String.format(
+                    "%-10d %-15.2f %-15.2f %-15.2f %-15.2f %-15.2f%n",
+                    i,
+                    details[0][0] / 20.0,
+                    details[1][0] / 20.0,
+                    details[2][0] / 20.0,
+                    details[3][0] / 20.0,
+                    details[4][0] / 20.0
+            ));
+            test2.append(String.format(
+                    "%-10d %-15.2f %-15.2f %-15.2f %-15.2f %-15.2f%n",
+                    i,
+                    details[0][1] / 20.0,
+                    details[1][1] / 20.0,
+                    details[2][1] / 20.0,
+                    details[3][1] / 20.0,
+                    details[4][1] / 20.0
+            ));
+            test3.append(String.format(
+                    "%-10d %-15.2f %-15.2f %-15.2f %-15.2f %-15.2f%n",
+                    i,
+                    details[0][2] / 20.0,
+                    details[1][2] / 20.0,
+                    details[2][2] / 20.0,
+                    details[3][2] / 20.0,
+                    details[4][2] / 20.0
+            ));
+
+        }
+
+        System.out.println("\n" + test1);
+        System.out.println("\n" + test2);
+        System.out.println("\n" + test3);
+
     }
 
     public HeapNode min;
